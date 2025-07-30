@@ -9,12 +9,12 @@ import './styles.css';
 
 // Initialize Firebase App
 const firebaseConfig = {
-  apiKey: "AIzaSyBO8Hh7yIou1SWGZO79AwQ8BF9v3pAT5Tw",
-  authDomain: "valtheerhackathon.firebaseapp.com",
-  projectId: "valtheerhackathon",
-  storageBucket: "valtheerhackathon.firebasestorage.app",
-  messagingSenderId: "682814987672",
-  appId: "1:682814987672:web:c0baf9aef4b9ec48d3dfed"
+  apiKey: "your api key",
+  authDomain: "your auth domain",
+  projectId: "your project id",
+  storageBucket: "your storage bucket id",
+  messagingSenderId: "your msg sender id",
+  appId: "your app id "
 };
 
 initializeApp(firebaseConfig);
