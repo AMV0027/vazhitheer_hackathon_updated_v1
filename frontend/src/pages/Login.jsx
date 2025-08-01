@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/logo.png'
+import logo from '../assets/logo.png';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 const languages = {
   'English': 'en',
@@ -154,132 +160,163 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-yellow-500">
-      {isRegister ? (
-        <form
-          onSubmit={handleRegisterSubmit}
-          className="w-full max-w-md p-8 border rounded-lg shadow-lg bg-white border-yellow-400 mb-24 mt-12"
-        >
-          <img src={logo} className='h-44 mx-auto' />
-          <h2 className="text-2xl font-bold text-center text-yellow-800 mb-6">IndiSafe Registration</h2>
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-yellow-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+        <CardHeader className="text-center pb-6">
+          <div className="flex justify-center mb-4">
+            <img src={logo} alt="IndiSafe Logo" className="h-32 w-auto" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-yellow-800">
+            {isRegister ? 'IndiSafe Registration' : 'IndiSafe Login'}
+          </CardTitle>
+          <CardDescription className="text-yellow-600">
+            {isRegister ? 'Create your account to get started' : 'Welcome back! Please sign in'}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {isRegister ? (
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-yellow-800 font-medium">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                  className="border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  placeholder="Enter your username"
+                />
+              </div>
 
-          <label className="block text-yellow-800">Username</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleInputChange}
-            required
-            className="w-full  text-yellow-800 p-1 border border-yellow-400 rounded-md focus:ring focus:ring-yellow-300"
-          />
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-yellow-800 font-medium">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  placeholder="Enter your email"
+                />
+              </div>
 
-          <label className="block text-yellow-800 mt-2">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            className="w-full text-yellow-800 p-1 border border-yellow-400 rounded-md focus:ring focus:ring-yellow-300"
-          />
+              <div className="space-y-2">
+                <Label htmlFor="mobile" className="text-yellow-800 font-medium">Mobile Number</Label>
+                <Input
+                  id="mobile"
+                  type="tel"
+                  name="mobile"
+                  value={formData.mobile}
+                  onChange={handleInputChange}
+                  required
+                  className="border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  placeholder="Enter your mobile number"
+                />
+              </div>
 
-          <label className="block text-yellow-800 mt-2">Mobile Number</label>
-          <input
-            type="tel"
-            name="mobile"
-            value={formData.mobile}
-            onChange={handleInputChange}
-            required
-            className="w-full text-yellow-800 p-1 border border-yellow-400 rounded-md focus:ring focus:ring-yellow-300"
-          />
+              <div className="space-y-2">
+                <Label htmlFor="state" className="text-yellow-800 font-medium">State</Label>
+                <Select name="state" value={formData.state} onValueChange={(value) => setFormData({...formData, state: value})}>
+                  <SelectTrigger className="border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500">
+                    <SelectValue placeholder="Select your state" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {states.map((state) => (
+                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <label className="block text-yellow-800 mt-2">State</label>
-          <select
-            name="state"
-            value={formData.state}
-            onChange={handleInputChange}
-            required
-            className="w-full text-yellow-800 p-1 border border-yellow-400 rounded-md focus:ring focus:ring-yellow-300"
-          >
-            <option value="" disabled>Select your state</option>
-            {states.map((state) => (
-              <option key={state} value={state}>{state}</option>
-            ))}
-          </select>
+              <div className="space-y-2">
+                <Label htmlFor="preferredLanguage" className="text-yellow-800 font-medium">Preferred Language</Label>
+                <Select name="preferredLanguage" value={formData.preferredLanguage} onValueChange={(value) => setFormData({...formData, preferredLanguage: value})}>
+                  <SelectTrigger className="border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500">
+                    <SelectValue placeholder="Select your language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(languages).map(([language, code]) => (
+                      <SelectItem key={code} value={language}>{language}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <label className="block text-yellow-800 mt-2">Preferred Language</label>
-          <select
-            name="preferredLanguage"
-            value={formData.preferredLanguage}
-            onChange={handleInputChange}
-            required
-            className="w-full text-yellow-800 p-1 border border-yellow-400 rounded-md focus:ring focus:ring-yellow-300"
-          >
-            <option value="" disabled>Select your language</option>
-            {Object.entries(languages).map(([language, code]) => (
-              <option key={code} value={language}>{language}</option>
-            ))}
-          </select>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-yellow-800 font-medium">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  className="border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  placeholder="Enter your password"
+                />
+              </div>
 
-          <label className="block text-yellow-800 mt-2">Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            required
-            className="w-full text-yellow-800 p-1 border border-yellow-400 rounded-md focus:ring focus:ring-yellow-300"
-          />
+              <Button type="submit" className="w-full bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white font-semibold py-3">
+                Register
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email" className="text-yellow-800 font-medium">Email</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  name="email"
+                  value={loginData.email}
+                  onChange={handleLoginInputChange}
+                  required
+                  className="border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  placeholder="Enter your email"
+                />
+              </div>
 
-          <button
-            type="submit"
-            className="w-full py-2 font-bold text-white bg-gradient-to-r from-yellow-800 via-yellow-500 to-yellow-800 rounded-md mt-4"
-          >
-            Register
-          </button>
-          <p className="text-center text-yellow-800">
-            Already have an account? <button onClick={() => setIsRegister(false)} className="text-yellow-800 underline">Login</button>
-          </p>
-        </form>
-      ) : (
-        <form
-          onSubmit={handleLoginSubmit}
-          className="w-full max-w-md p-8 space-y-4 border rounded-lg shadow-lg bg-white border-yellow-400"
-        >
-          <img src={logo} className='h-44 mx-auto' />
-          <h2 className="text-2xl font-bold text-center text-yellow-800">IndiSafe Login</h2>
+              <div className="space-y-2">
+                <Label htmlFor="login-password" className="text-yellow-800 font-medium">Password</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  name="password"
+                  value={loginData.password}
+                  onChange={handleLoginInputChange}
+                  required
+                  className="border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  placeholder="Enter your password"
+                />
+              </div>
 
-          <label className="block text-yellow-800">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={loginData.email}
-            onChange={handleLoginInputChange}
-            required
-            className="w-full text-yellow-800 p-1 border border-yellow-400 rounded-md focus:ring focus:ring-yellow-300"
-          />
+              <Button type="submit" className="w-full bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white font-semibold py-3">
+                Login
+              </Button>
+            </form>
+          )}
 
-          <label className="block text-yellow-800">Password</label>
-          <input
-            type="password"
-            name="password"
-            value={loginData.password}
-            onChange={handleLoginInputChange}
-            required
-            className="w-full text-yellow-800 p-1 border border-yellow-400 rounded-md focus:ring focus:ring-yellow-300"
-          />
-
-          <button
-            type="submit"
-            className="w-full py-2 font-bold text-white bg-gradient-to-r from-yellow-800 via-yellow-500 to-yellow-800 rounded-md"
-          >
-            Login
-          </button>
-          <p className="text-center text-yellow-500  mt-4">
-            Don't have an account? <button onClick={() => setIsRegister(true)} className="text-yellow-500 underline">Register</button>
-          </p>
-        </form>
-      )}
+          <Separator className="my-6" />
+          
+          <div className="text-center">
+            <p className="text-yellow-700 text-sm">
+              {isRegister ? 'Already have an account?' : "Don't have an account?"}
+              <Button
+                variant="link"
+                onClick={() => setIsRegister(!isRegister)}
+                className="text-yellow-800 hover:text-yellow-900 font-medium p-0 ml-1"
+              >
+                {isRegister ? 'Login' : 'Register'}
+              </Button>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,28 +1,37 @@
 import React from 'react';
 import { FaNewspaper } from "react-icons/fa6";
 import { FaLayerGroup } from "react-icons/fa";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 function ClientBottomNav({ selectedFilter, setSelectedFilter }) {
   return (
-    <div className='absolute bottom-0 -translate-x-2 flex flex-row justify-around w-full sm:w-[80vw] md:w-[65vw] lg:w-[55vw] xl:w-[45vw] ml-4 gap-2 p-2 shadow-2xl text-white bg-transparent backdrop-blur-xl'>
-      <button
+    <div className='fixed bottom-0 left-0 right-0 flex flex-row justify-around w-full gap-2 p-4 shadow-2xl bg-white/95 backdrop-blur-xl border-t border-gray-200'>
+      <Button
         onClick={() => setSelectedFilter('Recommended')}
-        className='flex flex-row gap-2 justify-center items-center bg-yellow-500 w-full p-2 rounded-md'
+        variant={selectedFilter === 'Recommended' ? 'default' : 'outline'}
+        className={`flex flex-row gap-2 justify-center items-center w-full py-3 ${
+          selectedFilter === 'Recommended' 
+            ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
+            : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'
+        }`}
       >
-        <FaNewspaper />
-        <p className='text-sm font-semibold flex flex-row items-center gap-1'>
-          Recommended
-        </p>
-      </button>
-      <button
+        <FaNewspaper className="h-4 w-4" />
+        <span className='text-sm font-semibold'>Recommended</span>
+      </Button>
+      
+      <Button
         onClick={() => setSelectedFilter('All')}
-        className='flex flex-row gap-2 justify-center items-center bg-yellow-500 w-full p-2 rounded-md'
+        variant={selectedFilter === 'All' ? 'default' : 'outline'}
+        className={`flex flex-row gap-2 justify-center items-center w-full py-3 ${
+          selectedFilter === 'All' 
+            ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
+            : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'
+        }`}
       >
-        <FaLayerGroup />
-        <p className='text-sm font-semibold flex flex-row items-center gap-1'>
-          All News
-        </p>
-      </button>
+        <FaLayerGroup className="h-4 w-4" />
+        <span className='text-sm font-semibold'>All News</span>
+      </Button>
     </div>
   );
 }

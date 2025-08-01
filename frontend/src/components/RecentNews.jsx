@@ -5,13 +5,18 @@ import { onAuthStateChanged } from "firebase/auth";
 import { GoAlertFill } from "react-icons/go";
 import { IoMdInformationCircle } from "react-icons/io";
 import { MdDangerous } from "react-icons/md";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 function RecentNews() {
   const [posts, setPosts] = useState([]);
   const [user, setUser] = useState(null);
   const [preferredLanguage, setPreferredLanguage] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState('Recommended');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [userState, setUserState] = useState(null);
 
   const fetchUserPreferredLanguage = async (userId) => {
@@ -48,89 +53,104 @@ function RecentNews() {
     (selectedFilter === 'Recommended' ? post.state === userState : true)
   );
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case "Info":
+        return <IoMdInformationCircle className="h-5 w-5 text-green-500" />;
+      case "Alert":
+        return <GoAlertFill className="h-5 w-5 text-yellow-500" />;
+      default:
+        return <MdDangerous className="h-5 w-5 text-red-500" />;
+    }
   };
 
-  const handleFilterChange = (filter) => {
-    setSelectedFilter(filter);
-    setIsDropdownOpen(false);
+  const getTypeBadge = (type) => {
+    const colors = {
+      "Info": "bg-green-100 text-green-800 hover:bg-green-200",
+      "Alert": "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+      "Danger": "bg-red-100 text-red-800 hover:bg-red-200"
+    };
+
+    return (
+      <Badge variant="secondary" className={colors[type] || colors["Info"]}>
+        {type}
+      </Badge>
+    );
   };
 
   return (
-    <div className='h-full overflow-y-scroll p-2 w-full pb-32 bg-zinc-100'>
-      <div className='flex flex-row justify-start gap-2 mt-1 mb-2 font-inter text-sm'>
-        <div className='relative w-full max-w-md mx-auto'>
-          <button
-            className='bg-yellow-500 w-full text-white rounded-md pl-2 p-1 pr-2 flex items-center justify-between'
-            onClick={toggleDropdown}
-          >
-            {selectedFilter}
-            <svg
-              className={`w-4 h-4 ml-2 ${isDropdownOpen ? 'transform rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          {isDropdownOpen && (
-            <div className='absolute mt-2 w-full bg-white border rounded-md shadow-lg z-10'>
-              <button
-                className='block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                onClick={() => handleFilterChange('Recommended')}
-              >
-                Recommended
-              </button>
-              <button
-                className='block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                onClick={() => handleFilterChange('All')}
-              >
-                All
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className='h-auto flex flex-col justify-start gap-4 items-center mt-2'>
-        {filteredPosts.map(post => {
-          const date = new Date(post.timestamp.seconds * 1000);
-          const formattedDate = date.toLocaleString(); // This will format the date and time without the timezone
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-blue-800">Recent News</h2>
+            <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Recommended">Recommended</SelectItem>
+                <SelectItem value="All">All News</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[500px]">
+            <div className="space-y-4">
+              {filteredPosts.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No posts available for your current filter.</p>
+                </div>
+              ) : (
+                filteredPosts.map(post => {
+                  const date = new Date(post.timestamp.seconds * 1000);
+                  const formattedDate = date.toLocaleString();
 
-          return (
-            <div key={post.id} className='w-full max-w-md flex flex-col bg-white shadow-xs rounded-md'>
-              <div className={`w-full p-1 flex gap-2 items-center rounded-t-md ${post.type === "Info" ? "bg-green-200" : post.type === "Alert" ? "bg-yellow-200" : "bg-red-200"}`}>
-                <span className='text-md'>
-                  {post.type === "Info" ? <IoMdInformationCircle className='text-green-500' /> :
-                    post.type === "Alert" ? <GoAlertFill className='text-yellow-500' /> :
-                    <MdDangerous className='text-red-500' />}
-                </span>
-                <p className={`text-xs font-normal font-poppins ${post.type === "Info" ? "text-green-600" : post.type === "Alert" ? "text-yellow-600" : "text-red-600"}`}>
-                  {post.type}
-                </p>
-              </div>
-              {post.images && post.images.length > 0 && (
-                <div className=''>
-                  {post.images.map((image, index) => (
-                    <img key={index} src={image} alt={`Image ${index}`} className='w-full h-auto mb-2' />
-                  ))}
-                </div>
+                  return (
+                    <Card key={post.id} className="shadow-sm hover:shadow-md transition-shadow">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {getTypeIcon(post.type)}
+                            {getTypeBadge(post.type)}
+                          </div>
+                          <span className="text-xs text-gray-500">{formattedDate}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600 font-medium">
+                            {post.state}-{post.district}
+                          </span>
+                        </div>
+                      </CardHeader>
+                      
+                      {post.images && post.images.length > 0 && (
+                        <div className="px-6 pb-3">
+                          {post.images.map((image, index) => (
+                            <img 
+                              key={index} 
+                              src={image} 
+                              alt={`Image ${index}`} 
+                              className="w-full h-auto rounded-lg mb-2 object-cover" 
+                            />
+                          ))}
+                        </div>
+                      )}
+                      
+                      <CardContent className="pt-0">
+                        <Separator className="mb-3" />
+                        <p className="text-gray-800 leading-relaxed">
+                          {post.translations[preferredLanguage]}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
-              <div className='pl-2 pr-2 mt-2 font-inter text-xs'>
-                <div className='flex items-center justify-between mb-2 '>
-                  <p className='text-gray-500 flex items-center gap-1'>
-                    {post.state}-{post.district}
-                  </p>
-                  <span className=' text-gray-500'>{formattedDate}</span>
-                </div>
-                <p className='text-base text-gray-900 mb-4'>{post.translations[preferredLanguage]}</p>
-              </div>
             </div>
-          );
-        })}
-      </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 }

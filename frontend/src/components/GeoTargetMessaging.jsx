@@ -10,6 +10,17 @@ import { MdDangerous } from "react-icons/md";
 import stateDistrictMap from './stateDistrictMap'; // Import the stateDistrictMap
 import { FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function GeoTargetMessaging() {
   const [postView, setPostView] = useState(0);
@@ -26,18 +37,17 @@ function GeoTargetMessaging() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentEditPost, setCurrentEditPost] = useState(null);
 
-  const handleStateChange = (event) => {
-    const state = event.target.value;
-    setSelectedState(state);
-    setDistricts(stateDistrictMap[state] || []);
+  const handleStateChange = (value) => {
+    setSelectedState(value);
+    setDistricts(stateDistrictMap[value] || []);
   };
 
-  const handleDistrictChange = (event) => {
-    setSelectedDistrict(event.target.value);
+  const handleDistrictChange = (value) => {
+    setSelectedDistrict(value);
   };
 
-  const handlePostTypeChange = (event) => {
-    setPostType(event.target.value);
+  const handlePostTypeChange = (value) => {
+    setPostType(value);
   };
 
   const handlePostMessageChange = (event) => {
@@ -99,19 +109,23 @@ function GeoTargetMessaging() {
         type: postType,
         state: selectedState,
         district: selectedDistrict,
+        culturalContext,
         images,
         userId: user.uid,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       await addDoc(collection(db, "posts"), postData);
+
       setPostMessage("");
-      setPostType("Info");
       setSelectedState("");
       setSelectedDistrict("");
       setImages([]);
+      setPostType("Info");
+      setCulturalContext(0.5);
     } catch (error) {
       console.error("Error creating post:", error);
+      alert("Error creating post. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -119,30 +133,44 @@ function GeoTargetMessaging() {
 
   const editPost = async () => {
     if (!currentEditPost) return;
-    const postRef = doc(db, "posts", currentEditPost.id);
-    const translations = await translatePost(currentEditPost.message);
 
-    await updateDoc(postRef, {
-      message: currentEditPost.message,
-      translations,
-      state: currentEditPost.state,
-      district: currentEditPost.district,
-      culturalContext: currentEditPost.culturalContext,
-    });
-    setIsEditModalOpen(false);
-    setCurrentEditPost(null);
+    setLoading(true);
+
+    try {
+      const translations = await translatePost(currentEditPost.message);
+
+      await updateDoc(doc(db, "posts", currentEditPost.id), {
+        message: currentEditPost.message,
+        translations,
+        state: currentEditPost.state,
+        district: currentEditPost.district,
+        culturalContext: currentEditPost.culturalContext,
+      });
+
+      setIsEditModalOpen(false);
+      setCurrentEditPost(null);
+    } catch (error) {
+      console.error("Error updating post:", error);
+      alert("Error updating post. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deletePost = async (postId) => {
-    await deleteDoc(doc(db, "posts", postId));
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      try {
+        await deleteDoc(doc(db, "posts", postId));
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        alert("Error deleting post. Please try again.");
+      }
+    }
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        fetchPosts();
-      }
     });
 
     return () => unsubscribe();
@@ -154,208 +182,317 @@ function GeoTargetMessaging() {
     }
   }, [postView, user]);
 
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case "Info":
+        return <IoMdInformationCircle className="h-5 w-5 text-green-500" />;
+      case "Alert":
+        return <GoAlertFill className="h-5 w-5 text-yellow-500" />;
+      default:
+        return <MdDangerous className="h-5 w-5 text-red-500" />;
+    }
+  };
+
+  const getTypeBadge = (type) => {
+    const colors = {
+      "Info": "bg-green-100 text-green-800 hover:bg-green-200",
+      "Alert": "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+      "Danger": "bg-red-100 text-red-800 hover:bg-red-200"
+    };
+
+    return (
+      <Badge variant="secondary" className={colors[type] || colors["Info"]}>
+        {type}
+      </Badge>
+    );
+  };
+
   return (
-    <div className='h-full w-full overflow-y-scroll p-2 shadow-md pb-32 bg-zinc-100'>
-      <div className='flex flex-row justify-between gap-2'>
-        <button className={`w-full text-center p-2 text-white rounded-md ${postView === 0 ? "bg-blue-800" : "bg-gray-400"}`} onClick={() => setPostView(0)}>
-          Your Posts
-        </button>
-        <button className={`w-full text-center p-2 text-white rounded-md ${postView !== 0 ? "bg-blue-800" : "bg-gray-400"}`} onClick={() => setPostView(1)}>
-          Create Post
-        </button>
-      </div>
-      <hr className="mb-1 mt-1" />
-      <h1 className="text-xl font-semibold font-poppins text-yellow-500">
-        {postView === 0 ? "Your Posts" : "Create Post"}
-      </h1>
-      <hr className=" mb-1 border-black" />
-      {postView === 0 ? (
-        <div className='h-auto flex flex-col justify-start gap-4 items-center mt-2'>
-          {posts.map(post => {
-            const date = new Date(post.timestamp.seconds * 1000);
-            const formattedDate = date.toLocaleString();
+    <div className="space-y-6">
+      <Tabs value={postView.toString()} onValueChange={(value) => setPostView(parseInt(value))} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="0">Your Posts</TabsTrigger>
+          <TabsTrigger value="1">Create Post</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="0" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-blue-800">Your Posts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[500px]">
+                <div className="space-y-4">
+                  {posts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No posts found. Create your first post!</p>
+                    </div>
+                  ) : (
+                    posts.map(post => {
+                      const date = new Date(post.timestamp.seconds * 1000);
+                      const formattedDate = date.toLocaleString();
 
-            return (
-              <div key={post.id} className='w-full max-w-md flex flex-col flex-start bg-white rounded-md'>
-                {post.images && post.images.length > 0 && (
-                  <div className=''>
-                    {post.images.map((image, index) => (
-                      <img key={index} src={image} alt={`Image ${index}`} className='w-full h-auto rounded-md mb-2' />
-                    ))}
-                  </div>
-                )}
-                <div className='pl-2 pr-2 pt-2 font-inter'>
-                  <div className='flex items-center justify-between mb-2'>
-                    <p className='text-sm text-gray-500 flex items-center gap-1'>
-                      <span className='text-md'>
-                        {post.type === "Info" ? <IoMdInformationCircle className='text-green-500' /> : post.type === "Alert" ? <GoAlertFill className='text-yellow-500' /> : <MdDangerous className='text-red-500' />}
-                      </span>
-                      {post.state}-{post.district}
-                    </p>
-                    <span className='text-sm text-gray-500'>{formattedDate}</span>
-                  </div>
-
-                  <p className='text-gray-900 mb-4'>{post.message}</p>
-                  <div className='flex justify-end gap-2 pb-2 text-xl'>
-                    <button className='text-blue-500' onClick={() => {
-                      setCurrentEditPost(post);
-                      setIsEditModalOpen(true);
-                    }}><FaEdit /></button>
-                    <button className='text-red-500' onClick={() => deletePost(post.id)}><MdDelete /></button>
-                  </div>
+                      return (
+                        <Card key={post.id} className="shadow-sm hover:shadow-md transition-shadow">
+                          {post.images && post.images.length > 0 && (
+                            <div className="p-4 pb-0">
+                              {post.images.map((image, index) => (
+                                <img 
+                                  key={index} 
+                                  src={image} 
+                                  alt={`Image ${index}`} 
+                                  className="w-full h-auto rounded-lg mb-2 object-cover" 
+                                />
+                              ))}
+                            </div>
+                          )}
+                          
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                {getTypeIcon(post.type)}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-gray-600 font-medium">
+                                    {post.state}-{post.district}
+                                  </span>
+                                  {getTypeBadge(post.type)}
+                                </div>
+                              </div>
+                              <span className="text-xs text-gray-500">{formattedDate}</span>
+                            </div>
+                            
+                            <Separator className="mb-3" />
+                            
+                            <p className="text-gray-800 leading-relaxed mb-4">{post.message}</p>
+                            
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setCurrentEditPost(post);
+                                  setIsEditModalOpen(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-700"
+                              >
+                                <FaEdit className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deletePost(post.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <MdDelete className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })
+                  )}
                 </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="1" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-blue-800">Create Post</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="postMessage" className="text-sm font-medium text-gray-700">Post Message</Label>
+                <Textarea
+                  id="postMessage"
+                  placeholder="Your post message..."
+                  value={postMessage}
+                  onChange={handlePostMessageChange}
+                  className="min-h-[120px] resize-none"
+                />
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <>
-          <textarea
-            name="postMessage"
-            rows={15}
-            className='w-full h-auto p-2 border-2 border-zinc-500 text-sm rounded-md mt-2'
-            placeholder='Your post message...'
-            value={postMessage}
-            onChange={handlePostMessageChange}
-          ></textarea>
-          <div className="bg-zinc-500 text-white p-2 rounded-md flex flex-row justify-between gap-2 items-center mt-1 mb-2">
-            <label htmlFor="culturalContext" className=' w-auto'>Cultural Context</label>
-            <div className='flex w-full gap-2'>
-              <input
-                type="range"
-                id="culturalContext"
-                name="culturalContext"
-                min="0"
-                max="1"
-                step="0.1"
-                value={culturalContext}
-                onChange={handleCulturalContextChange}
-                className="w-full accent-gray-300"
-              />
-              <span>{culturalContext}</span>
-            </div>
-          </div>
-          <div className='flex flex-row justify-between gap-2'>
-            <select
-              name="postType"
-              value={postType}
-              onChange={handlePostTypeChange}
-              className='w-full p-2 border border-gray-400 rounded-md'
-            >
-              <option value="Info">Info</option>
-              <option value="Alert">Alert</option>
-              <option value="Danger">Danger</option>
-            </select>
-            <select
-              name="state"
-              value={selectedState}
-              onChange={handleStateChange}
-              className='w-full p-2 border border-gray-400 rounded-md'
-            >
-              <option value="">Select State</option>
-              {Object.keys(stateDistrictMap).map((state, index) => (
-                <option key={index} value={state}>{state}</option>
-              ))}
-            </select>
-            <select
-              name="district"
-              value={selectedDistrict}
-              onChange={handleDistrictChange}
-              className='w-full p-2 border border-gray-400 rounded-md'
-              disabled={!selectedState}
-            >
-              <option value="">Select District</option>
-              {districts.map((district, index) => (
-                <option key={index} value={district}>{district}</option>
-              ))}
-            </select>
-          </div>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            className="w-full mt-2 text-gray-400 font-semibold text-sm bg-white border cursor-pointer file:cursor-pointer file:border-0 file:py-3 file:px-4 file:mr-4 file:bg-zinc-500 file:hover:bg-gray-200 file:text-white rounded-md"
 
-          />
-          <button
-            className='bg-blue-800 w-full flex flex-row items-center justify-center gap-2 text-white p-2 rounded-md mt-2'
-            onClick={createPost}
-            disabled={loading}
-          >
-            {loading ? "Posting..." : "Create Post"} <IoMdSend />
-          </button>
-        </>
-      )}
-      {isEditModalOpen && (
-        <div className="absolute top-0 left-0 bg-zinc-100 bg-opacity-35 backdrop-blur-sm w-screen flex justify-center items-center h-screen">
-          <div className="bg-white p-6 rounded-md shadow-md w-[80vw]">
-            <h2 className="text-lg font-bold mb-4">Edit Post</h2>
-            <textarea
-              name="editPostMessage"
-              rows={10}
-              className='w-full h-auto p-2 border-2 border-zinc-500 text-sm rounded-md mt-2 mb-4'
-              value={currentEditPost.message}
-              onChange={(e) => setCurrentEditPost({ ...currentEditPost, message: e.target.value })}
-            ></textarea>
-            <div className='flex flex-col gap-4'>
-              <label>
-                State:
-                <select
-                  value={currentEditPost.state}
-                  onChange={(e) => setCurrentEditPost({ ...currentEditPost, state: e.target.value })}
-                  className='w-full p-2 border border-gray-400 rounded-md'
-                >
-                  <option value="">Select State</option>
-                  {Object.keys(stateDistrictMap).map((state, index) => (
-                    <option key={index} value={state}>{state}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                District:
-                <select
-                  value={currentEditPost.district}
-                  onChange={(e) => setCurrentEditPost({ ...currentEditPost, district: e.target.value })}
-                  className='w-full p-2 border border-gray-400 rounded-md'
-                >
-                  <option value="">Select District</option>
-                  {(stateDistrictMap[currentEditPost.state] || []).map((district, index) => (
-                    <option key={index} value={district}>{district}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Cultural Context:
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  Cultural Context: {culturalContext}
+                </Label>
                 <input
                   type="range"
                   min="0"
                   max="1"
                   step="0.1"
-                  value={currentEditPost.culturalContext}
-                  onChange={(e) => setCurrentEditPost({ ...currentEditPost, culturalContext: parseFloat(e.target.value) })}
-                  className="w-full accent-gray-300"
+                  value={culturalContext}
+                  onChange={handleCulturalContextChange}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                 />
-                <span>{currentEditPost.culturalContext}</span>
-              </label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="postType" className="text-sm font-medium text-gray-700">Post Type</Label>
+                  <Select value={postType} onValueChange={handlePostTypeChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Info">Info</SelectItem>
+                      <SelectItem value="Alert">Alert</SelectItem>
+                      <SelectItem value="Danger">Danger</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="state" className="text-sm font-medium text-gray-700">State</Label>
+                  <Select value={selectedState} onValueChange={handleStateChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(stateDistrictMap).map((state, index) => (
+                        <SelectItem key={index} value={state}>{state}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="district" className="text-sm font-medium text-gray-700">District</Label>
+                  <Select value={selectedDistrict} onValueChange={handleDistrictChange} disabled={!selectedState}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select district" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {districts.map((district, index) => (
+                        <SelectItem key={index} value={district}>{district}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="images" className="text-sm font-medium text-gray-700">Images (Optional)</Label>
+                <Input
+                  id="images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  className="cursor-pointer"
+                />
+              </div>
+
+              <Button
+                onClick={createPost}
+                disabled={loading || !postMessage.trim() || !selectedState || !selectedDistrict}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Posting...
+                  </>
+                ) : (
+                  <>
+                    <IoMdSend className="mr-2 h-4 w-4" />
+                    Create Post
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+            <DialogDescription>
+              Make changes to your post here. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editMessage" className="text-sm font-medium text-gray-700">Message</Label>
+              <Textarea
+                id="editMessage"
+                value={currentEditPost?.message || ""}
+                onChange={(e) => setCurrentEditPost({ ...currentEditPost, message: e.target.value })}
+                className="min-h-[100px] resize-none"
+              />
             </div>
-            <div className='flex justify-end gap-4 mt-4'>
-              <button
-                className='bg-green-500 text-white p-2 rounded-md'
-                onClick={editPost}
-              >
-                Save
-              </button>
-              <button
-                className='bg-red-500 text-white p-2 rounded-md'
-                onClick={() => setIsEditModalOpen(false)}
-              >
-                Cancel
-              </button>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editState" className="text-sm font-medium text-gray-700">State</Label>
+                <Select 
+                  value={currentEditPost?.state || ""} 
+                  onValueChange={(value) => setCurrentEditPost({ ...currentEditPost, state: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select state" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(stateDistrictMap).map((state, index) => (
+                      <SelectItem key={index} value={state}>{state}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editDistrict" className="text-sm font-medium text-gray-700">District</Label>
+                <Select 
+                  value={currentEditPost?.district || ""} 
+                  onValueChange={(value) => setCurrentEditPost({ ...currentEditPost, district: value })}
+                  disabled={!currentEditPost?.state}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(stateDistrictMap[currentEditPost?.state] || []).map((district, index) => (
+                      <SelectItem key={index} value={district}>{district}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">
+                Cultural Context: {currentEditPost?.culturalContext || 0.5}
+              </Label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={currentEditPost?.culturalContext || 0.5}
+                onChange={(e) => setCurrentEditPost({ ...currentEditPost, culturalContext: parseFloat(e.target.value) })}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              />
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={editPost} disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

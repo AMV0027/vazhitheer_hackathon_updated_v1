@@ -2,36 +2,55 @@ import React, { useState } from 'react'
 import { RiSpeakAiFill } from "react-icons/ri";
 import { GrAnnounce } from "react-icons/gr";
 import { FaNewspaper } from "react-icons/fa6";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 function AdminBottomNav({currTab}) {
     const [tab, setTab] = useState(0);
     
   return (
-    <div className='absolute bottom-0 flex flex-row justify-around w-full sm:w-[80vw] md:w-[65vw] lg:w-[55vw] xl:w-[45vw] gap-2 p-2 shadow-2xl text-white bg-white border-t-2 backdrop-blur-md'>
-        <button
+    <div className='fixed bottom-0 left-0 right-0 flex flex-row justify-around w-full gap-2 p-4 shadow-2xl bg-white/95 backdrop-blur-xl border-t border-gray-200'>
+        <Button
         onClick={() => {setTab(0); currTab(0);}}
-        className='flex flex-col justify-center items-center bg-blue-800 w-full p-2 rounded-md'>
-            <FaNewspaper />
-            <p className='text-sm font-semibold flex flex-row items-center gap-1'>
+        variant={tab === 0 ? 'default' : 'outline'}
+        className={`flex flex-col justify-center items-center w-full py-3 ${
+          tab === 0 
+            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+            : 'border-blue-300 text-blue-700 hover:bg-blue-50'
+        }`}>
+            <FaNewspaper className="h-4 w-4 mb-1" />
+            <span className='text-xs font-semibold text-center'>
                 Recent Updates
-            </p>
-        </button>
-        <button
-        onClick={() => {setTab(0); currTab(1);}}
-        className='flex flex-col justify-center items-center bg-blue-800 w-full p-2 rounded-md'>
-            <RiSpeakAiFill className='text-xl' />
-            <p className='text-sm font-semibold flex flex-row items-center gap-1'>
-                language Translation
-            </p>
-        </button>
-        <button
-        onClick={() => {setTab(1); currTab(2);}}
-        className='flex flex-col justify-center items-center bg-blue-800 w-full p-2 rounded-md'>
-            <GrAnnounce className='text-xl' />
-            <p className='text-sm font-semibold flex flex-row items-center gap-1'>
+            </span>
+        </Button>
+        
+        <Button
+        onClick={() => {setTab(1); currTab(1);}}
+        variant={tab === 1 ? 'default' : 'outline'}
+        className={`flex flex-col justify-center items-center w-full py-3 ${
+          tab === 1 
+            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+            : 'border-blue-300 text-blue-700 hover:bg-blue-50'
+        }`}>
+            <RiSpeakAiFill className='h-4 w-4 mb-1' />
+            <span className='text-xs font-semibold text-center'>
+                Language Translation
+            </span>
+        </Button>
+        
+        <Button
+        onClick={() => {setTab(2); currTab(2);}}
+        variant={tab === 2 ? 'default' : 'outline'}
+        className={`flex flex-col justify-center items-center w-full py-3 ${
+          tab === 2 
+            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+            : 'border-blue-300 text-blue-700 hover:bg-blue-50'
+        }`}>
+            <GrAnnounce className='h-4 w-4 mb-1' />
+            <span className='text-xs font-semibold text-center'>
                 Geo Target Messaging
-            </p>
-        </button>
+            </span>
+        </Button>
     </div>
   )
 }

@@ -5,19 +5,8 @@ import { initializeApp } from "firebase/app";
 import AdminHome from "./pages/AdminHome";
 import ClientHome from "./pages/ClientHome";
 import Login from "./pages/Login";
+import Loader from "./components/Loader";
 import './styles.css';
-
-// Initialize Firebase App
-const firebaseConfig = {
-  apiKey: "your api key",
-  authDomain: "your auth domain",
-  projectId: "your project id",
-  storageBucket: "your storage bucket id",
-  messagingSenderId: "your msg sender id",
-  appId: "your app id "
-};
-
-initializeApp(firebaseConfig);
 
 function ProtectedRoute({ children }) {
   const auth = getAuth();
@@ -31,7 +20,7 @@ function ProtectedRoute({ children }) {
   }, [auth]);
 
   if (isAuthenticated === null) {
-    return <div>Loading...</div>; // Optionally show a loading indicator
+    return <Loader />;
   }
 
   return isAuthenticated ? children : <Navigate to="/login" />;
